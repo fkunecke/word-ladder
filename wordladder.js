@@ -1,9 +1,25 @@
 const fs = require('fs');
 
 // language constants to form our dictionary and possible characters.
-const words = new Set(fs.readFileSync('words.txt', 'utf8').split(/\s+/));
+const words4 = new Set(fs.readFileSync('dictionary4.txt', 'utf8').split(/\s+/));
+const words5 = new Set(fs.readFileSync('dictionary5.txt', 'utf8').split(/\s+/));
+const words6 = new Set(fs.readFileSync('dictionary6.txt', 'utf8').split(/\s+/));
+const words7 = new Set(fs.readFileSync('dictionary7.txt', 'utf8').split(/\s+/));
 const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
 const indices = [0, 1, 2, 3];
+
+function getDict(length) {
+    switch (length) {
+        case 4:
+            return words4;
+        case 5:
+            return words5;
+        case 6:
+            return words6;
+        case 7:
+            return words7;
+    }
+}
 
 /*
 Puzzle solving : we need to find 
@@ -19,14 +35,14 @@ Puzzle solving : we need to find
  * @param {number} ladderLength number of words needed in the ladder
  * @returns {string[]} valid ladder or empty array
  */
-function solve(start, end, ladderLength = 6) {
+function solve(start, end, ladderLength = 8, words) {
     if (start === end || !words.has(start) || !words.has(end)) {
         return [];
     }
     let s = [[start]];
     while (s.length > 0) {
         let v = s.pop();
-        for (let node of successors(v[v.length-1])) {
+        for (let node of successors(v[v.length-1], words)) {
             if (v.includes(node)) {
                 continue;
             }
@@ -49,7 +65,7 @@ function solve(start, end, ladderLength = 6) {
  * @param {string} word start word to seed the generation.
  * @yields {string} a valid successor word.
  */
-function* successors(word) {
+function* successors(word, words) {
     for (let i = 0; i < word.length; i++) {
         for (let j = 0; j < alphabet.length; j++) {
             // If our update will be the same skip this iteration.
@@ -77,10 +93,10 @@ each one character different from eachother for a given ladder length.
  * @param {number} ladderLength length of ladder puzzle.
  * @returns {string[]} a new valid word ladder.
  */
-function generate(start, ladderLength = 6) {
+function generate(start, ladderLength = 6, words) {
     let ladder = [start];
     for (let i = 1; i < ladderLength; i++) {
-        let w = nextWord(ladder);
+        let w = nextWord(ladder, words);
         if (w === '') {
             return [];
         }
@@ -97,7 +113,7 @@ function generate(start, ladderLength = 6) {
  * @param {array} ladder current word ladder being generated. 
  * @returns {string} a valid next word.
  */
-function nextWord(ladder) {
+function nextWord(ladder, words) {
     let prevWord = ladder[ladder.length-1];
     for (let i of randArrayIter(indices)) {
         for (let char of randArrayIter(alphabet)) {
@@ -143,7 +159,8 @@ function shuffle(array) {
     }
 }
 
-function randomWord() {
+function randomWord(length) {
+    const words = getDict(length);
     let i = 0;
     let v = Math.floor(Math.random() * words.size);
     for (let word of words.values()) {
@@ -172,5 +189,6 @@ module.exports = {
     successors: successors,
     randomWord: randomWord,
     replaceCharAtIndex: replaceCharAtIndex,
-    words: words
+    getDict: getDict,
+    // words: words
 }

@@ -12,7 +12,8 @@ function cli(args) {
     try {
         switch (cmd) {
             case 'generate':
-                generateLadder(vargs);
+                // generateLadder(vargs);
+                newGenerate(vargs);
                 break;
             case 'solve':
                 solveLadder(vargs);
@@ -28,11 +29,17 @@ function cli(args) {
 
 // validate args and call word ladder generate, print results if successful
 function generateLadder(args) {
-    let start = validWord(args.length === 1 ? args[0] : wl.randomWord());
-    let puzzle = wl.generate(start);
+    // let start = validWord(args.length === 1 ? args[0] : wl.randomWord());
+    let wordLength = Number(args[0]);
+    let wordDepth = Number(args[1]);
+    console.log(`${wordLength} ${wordDepth}`)
+    let words = wl.getDict(wordLength);
+    let start = wl.randomWord(wordLength);
+    let puzzle = wl.generate(start, wordDepth, words);
     if (puzzle.length === 0) {
         throw new WlError(`Could not find a generate a puzzle for start: ${start}`)
     }
+    console.log(puzzle);
     console.log(fmtGenerated(puzzle));
 }
 
@@ -41,20 +48,56 @@ function solveLadder(args) {
     if (args.length < 2) {
         throw new WlError(`Not enough args for solver. got=${args.length} want=2`)
     }
-    let [start, end] = [validWord(args[0]), validWord(args[1])];
-    let solution = wl.solve(start, end);
+    let wordLength = args[0].length;
+    let words = wl.getDict(wordLength);
+    let [start, end] = [validWord(args[0], words), validWord(args[1], words)];
+
+    var solution;
+    for (let i = 4; i < 20; i++) {
+        solution = wl.solve(start, end, i, words);
+        i > 7 && console.log(`trying solution of length ${i}...`);
+        if (solution.length > 0) {
+            console.log(`found optimal solution of length ${i}`);
+            break;
+        }
+    }
     if (solution.length === 0) {
         throw new WlError(`Could not find a solution for ${start} to ${end}`)
     }
     console.log(fmtSolution(solution));
 }
 
-function validWord(word) {
-    if (word.length !== 4) {
-        throw new WlError(
-            `All words should be 4 letters long. ${word} has ${word.length} letters`);
+// validate args and call word ladder solve, print results if successful
+function newGenerate(args) {
+    if (args.length < 1) {
+        throw new WlError(`Not enough args for solver. got=${args.length} want=2`)
     }
-    if (!wl.words.has(word)) {
+    let wordLength = Number(args[0]);
+    let words = wl.getDict(wordLength);
+    let start = wl.randomWord(wordLength);
+    let end = wl.randomWord(wordLength);
+
+    var solution;
+    for (let i = 4; i < 15; i++) {
+        solution = wl.solve(start, end, i, words);
+        i > 7 && console.log(`trying solution of length ${i}...`);
+        if (solution.length > 0) {
+            console.log(`found optimal solution of length ${i}`);
+            break;
+        }
+    }
+    if (solution.length === 0) {
+        throw new WlError(`Could not find a solution for ${start} to ${end}`)
+    }
+    console.log(fmtSolution(solution));
+}
+
+function validWord(word, words) {
+    // if (word.length !== 4) {
+    //     throw new WlError(
+    //         `All words should be 4 letters long. ${word} has ${word.length} letters`);
+    // }
+    if (!words.has(word)) {
         throw new WlError(`${word} is not a valid word in our dictionary`)
     }
     return word.toLowerCase();
